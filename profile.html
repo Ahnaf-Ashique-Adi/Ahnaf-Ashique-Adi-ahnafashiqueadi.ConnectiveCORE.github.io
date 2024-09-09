@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body {
+            background-image: url('web.svg'); 
+            background-size: cover;
+            background-position: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.7); 
+            border-radius: 0.25rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 1; 
+        }
+
+        .btn {
+            border-radius: 0.25rem; 
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #profileData {
+            margin-bottom: 20px;
+        }
+
+        #logoutButton, #updateButton {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        footer {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            text-align: center;
+            color: black;
+            margin-top: auto; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Profile</h1>
+        
+        <div id="profileData">
+           
+        </div>
+
+        <!-- Update Data Button -->
+        <button id="updateButton" class="btn btn-primary">Update Data</button>
+        
+        <!-- Logout Button -->
+        <button id="logoutButton" class="btn btn-danger">Logout</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdUr1YDDRxgpR7ihRKULr9_D0-laXBd_U",
+            authDomain: "club-entry-project.firebaseapp.com",
+            projectId: "club-entry-project",
+            storageBucket: "club-entry-project.appspot.com",
+            messagingSenderId: "855567589688",
+            appId: "1:855567589688:web:24eb4d821571c5955821cd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    document.getElementById('profileData').innerHTML = `
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Name:</strong> ${userData.name}</p>
+                        <p><strong>Phone:</strong> ${userData.phone}</p>
+                        <p><strong>Address:</strong> ${userData.address}</p>
+                        <p><strong>Student ID:</strong> ${userData.studentId}</p>
+                        <p><strong>CGPA:</strong> ${userData.cgpa || 'Not Provided'}</p>
+                        <p><strong>Department:</strong> ${userData.department}</p>
+                    `;
+                } else {
+                    console.log("No such document!");
+                }
+            } else {
+                window.location.href = "index.html"; // Redirect to login(index) page if not logged in
+            }
+        });
+
+        // Update Data Button functionality
+        document.getElementById('updateButton').addEventListener('click', () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const docRef = doc(db, "users", user.uid);
+                    const name = prompt("Enter new Name:", "");
+                    const phone = prompt("Enter new Phone Number:", "");
+                    const address = prompt("Enter new Address:", "");
+                    const studentId = prompt("Enter new Student ID:", "");
+                    const cgpa = prompt("Enter new CGPA (optional):", "");
+                    const department = prompt("Enter new Department:", "");
+
+                    await updateDoc(docRef, {
+                        name: name,
+                        phone: phone,
+                        address: address,
+                        studentId: studentId,
+                        cgpa: cgpa || null,
+                        department: department
+                    })
+                    .then(() => {
+                        alert('Profile updated successfully');
+                        window.location.reload(); // Reload page to show updated data
+                    })
+                    .catch((error) => {
+                        console.error('Error updating profile:', error);
+                        alert('Failed to update profile: ' + error.message);
+                    });
+                } else {
+                    alert('No user is signed in');
+                }
+            });
+        });
+    </script>
+
+    <script src="logout.js" type="module"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <footer>
+        <p><font size="5" color="black" face="calibri"><i> COPYRIGHT-@-AHNAF_ASHIQUE_ADI-2024</i></font></p>
+    </footer>
+</body>
+</html>
